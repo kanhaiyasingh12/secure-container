@@ -1,33 +1,22 @@
 options:
   defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
 
-substitutions:
-  _TAG: $SHORT_SHA
-
 steps:
-  # Step 1: Build backend image with unique tag
+  # Step 1: Build backend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build',
-      '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}',
-      './backend'
-    ]
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend', './backend']
 
-  # Step 2: Build frontend image with unique tag
+  # Step 2: Build frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build',
-      '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}',
-      './frontend'
-    ]
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend', './frontend']
 
   # Step 3: Push backend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}']
+    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend']
 
   # Step 4: Push frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}']
+    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend']
 
   # Step 5: Deploy to GKE using kubectl
   - name: 'gcr.io/cloud-builders/kubectl'
@@ -36,9 +25,9 @@ steps:
       - '-f'
       - 'k8s/'
     env:
-      - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+      - 'CLOUDSDK_COMPUTE_ZONE=us-central1-c'
       - 'CLOUDSDK_CONTAINER_CLUSTER=cluster-1'
 
 images:
-  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}'
-  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}'
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend'
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend'
