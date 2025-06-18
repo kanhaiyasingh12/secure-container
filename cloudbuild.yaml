@@ -25,6 +25,3 @@ steps:
 images:
   - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend
   - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend
-
-# ✅ This fixes the error about service_account requiring logging configuration
-logging: CLOUD_LOGGING_ONLY
