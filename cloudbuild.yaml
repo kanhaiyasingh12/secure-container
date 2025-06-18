@@ -27,8 +27,6 @@ steps:
     env:
       - 'CLOUDSDK_COMPUTE_REGION=us-central1'
       - 'CLOUDSDK_CONTAINER_CLUSTER=cluster-1'
-
 images:
-  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend'
-  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend'
-
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}'
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}'
