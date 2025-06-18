@@ -1,33 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: secure-frontend
+  name: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: secure-frontend
+      app: frontend
   template:
     metadata:
       labels:
-        app: secure-frontend
+        app: frontend
     spec:
       containers:
-      - name: frontend
-        image: image: us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:SECURE_FRONTEND_TAG
-        ports:
-        - containerPort: 80
+        - name: frontend
+          image: us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend
+          ports:
+            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: secure-frontend-service
+  name: frontend-service
 spec:
-  selector:
-    app: secure-frontend
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
   type: LoadBalancer
-
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
