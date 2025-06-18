@@ -1,21 +1,24 @@
+options:
+  logging: CLOUD_LOGGING_ONLY  # Use this if you're not using a log bucket
+
 steps:
-  # Build backend image
+  # Build Backend Docker Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend', './backend']
 
-  # Build frontend image
+  # Build Frontend Docker Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend', './frontend']
 
-  # Push backend image
+  # Push Backend Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend']
 
-  # Push frontend image
+  # Push Frontend Image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend']
 
-  # Apply Kubernetes manifests
+  # Deploy to Kubernetes
   - name: 'gcr.io/cloud-builders/kubectl'
     args: ['apply', '-f', 'k8s/']
     env:
@@ -23,5 +26,5 @@ steps:
       - 'CLOUDSDK_CONTAINER_CLUSTER=cluster-1'
 
 images:
-  - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend
-  - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend'
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend'
