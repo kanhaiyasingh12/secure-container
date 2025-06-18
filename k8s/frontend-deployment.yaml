@@ -13,8 +13,8 @@ spec:
         app: secure-frontend
     spec:
       containers:
-      - name: secure-frontend
-        image: us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend
+      - name: frontend
+        image: us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:SECURE_FRONTEND_TAG
         ports:
         - containerPort: 80
 ---

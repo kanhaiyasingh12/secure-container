@@ -1,26 +1,58 @@
-steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend', './backend']
-  
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend', './frontend']
-  
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend']
-  
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend']
+substitutions:
+  _TAG: '${SHORT_SHA}'
 
-  - name: 'gcr.io/cloud-builders/kubectl'
+steps:
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
     args:
-      - 'apply'
-      - '-f'
-      - 'k8s/'
+      [
+        'build',
+        '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}',
+        './backend'
+      ]
+
+  # Build Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}',
+        './frontend'
+      ]
+
+  # Push Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}'
+      ]
+
+  # Push Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}'
+      ]
+
+  # Optional: Replace tag in Kubernetes YAML files before applying
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        sed -i "s|SECURE_BACKEND_TAG|${_TAG}|g" k8s/deployment-backend.yaml
+        sed -i "s|SECURE_FRONTEND_TAG|${_TAG}|g" k8s/deployment-frontend.yaml
+
+  # Deploy to GKE
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'k8s/']
     env:
       - 'CLOUDSDK_COMPUTE_REGION=us-central1'
       - 'CLOUDSDK_CONTAINER_CLUSTER=cluster-1'
 
 images:
-  - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend
-  - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend
+  - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}
+  - us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}
 
