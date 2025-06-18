@@ -1,54 +1,34 @@
-substitutions:
-  _TAG: "${SHORT_SHA}"
+options:
+  defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
 
 steps:
-  # Build Backend Docker image
-  - name: "gcr.io/cloud-builders/docker"
-    args: [
-      "build",
-      "-t", "us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}",
-      "./backend"
-    ]
+  # Step 1: Build backend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend', './backend']
 
-  # Build Frontend Docker image
-  - name: "gcr.io/cloud-builders/docker"
-    args: [
-      "build",
-      "-t", "us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}",
-      "./frontend"
-    ]
+  # Step 2: Build frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend', './frontend']
 
-  # Push Backend image
-  - name: "gcr.io/cloud-builders/docker"
-    args: [
-      "push",
-      "us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}"
-    ]
+  # Step 3: Push backend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend']
 
-  # Push Frontend image
-  - name: "gcr.io/cloud-builders/docker"
-    args: [
-      "push",
-      "us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}"
-    ]
+  # Step 4: Push frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend']
 
-  # Replace tags in deployment YAMLs
-  - name: "gcr.io/cloud-builders/gcloud"
-    entrypoint: "bash"
+  # Step 5: Deploy to GKE using kubectl
+  - name: 'gcr.io/cloud-builders/kubectl'
     args:
-      - "-c"
-      - |
-        sed -i "s|SECURE_BACKEND_TAG|${_TAG}|g" k8s/deployment-backend.yaml
-        sed -i "s|SECURE_FRONTEND_TAG|${_TAG}|g" k8s/deployment-frontend.yaml
-
-  # Deploy to GKE
-  - name: "gcr.io/cloud-builders/kubectl"
-    args: ["apply", "-f", "k8s/"]
+      - 'apply'
+      - '-f'
+      - 'k8s/'
     env:
-      - "CLOUDSDK_COMPUTE_REGION=us-central1"
-      - "CLOUDSDK_CONTAINER_CLUSTER=cluster-1"
+      - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=cluster-1'
 
 images:
-  - "us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}"
-  - "us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}"
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend'
+  - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend'
 
