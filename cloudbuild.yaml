@@ -1,32 +1,83 @@
+# ✅ Full cloudbuild.yaml for Secure Build, Scan, and Deploy Workflow
+
 options:
   defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
 
+substitutions:
+  _TAG: 'latest'
+
 steps:
-  # Step 1: Build backend image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend', './backend']
+# === BACKEND ===
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build Backend Image'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}', './backend']
 
-  # Step 2: Build frontend image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend', './frontend']
+- name: 'aquasec/trivy:latest'
+  id: 'Trivy Scan Backend'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      trivy image --exit-code 0 --format json -o trivy-backend-report.json us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}
 
-  # Step 3: Push backend image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend']
+- name: 'anchore/grype:latest'
+  id: 'Grype Scan Backend'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG} -o json > grype-backend-report.json
 
-  # Step 4: Push frontend image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend']
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Push Backend Image'
+  args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}']
 
-  # Step 5: Deploy to GKE using kubectl
-  - name: 'gcr.io/cloud-builders/kubectl'
-    args:
-      - 'apply'
-      - '-f'
-      - 'k8s/'
-    env:
-      - 'CLOUDSDK_COMPUTE_REGION=us-central1'
-      - 'CLOUDSDK_CONTAINER_CLUSTER=cluster-1'
+# === FRONTEND ===
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Build Frontend Image'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}', './frontend']
+
+- name: 'aquasec/trivy:latest'
+  id: 'Trivy Scan Frontend'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      trivy image --exit-code 0 --format json -o trivy-frontend-report.json us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}
+
+- name: 'anchore/grype:latest'
+  id: 'Grype Scan Frontend'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG} -o json > grype-frontend-report.json
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Push Frontend Image'
+  args: ['push', 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}']
+
+# === UPLOAD REPORTS ===
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: 'Upload Reports to GCS'
+  entrypoint: 'sh'
+  args:
+    - '-c'
+    - |
+      gsutil cp *.json gs://secure-scan-reports-file
+
+# === DEPLOY TO GKE ===
+- name: 'gcr.io/cloud-builders/kubectl'
+  id: 'Deploy to GKE'
+  args:
+    - 'apply'
+    - '-f'
+    - 'k8s/'
+  env:
+    - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=cluster-1'
+
 images:
   - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}'
   - 'us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}'
+
