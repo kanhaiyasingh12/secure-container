@@ -1,3 +1,5 @@
+# ✅ Full cloudbuild.yaml: Secure Build → Scan → Push → Deploy with Fixed Grype Execution
+
 options:
   defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
 
@@ -18,12 +20,12 @@ steps:
     - |
       trivy image --exit-code 0 --format json -o trivy-backend-report.json us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}
 
-- name: 'anchore/grype:latest'
+- name: 'gcr.io/cloud-builders/bash'
   id: 'Grype Scan Backend'
-  entrypoint: 'sh'
   args:
     - '-c'
     - |
+      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
       grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG} -o json > grype-backend-report.json
 
 - name: 'gcr.io/cloud-builders/docker'
@@ -43,12 +45,12 @@ steps:
     - |
       trivy image --exit-code 0 --format json -o trivy-frontend-report.json us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}
 
-- name: 'anchore/grype:latest'
+- name: 'gcr.io/cloud-builders/bash'
   id: 'Grype Scan Frontend'
-  entrypoint: 'sh'
   args:
     - '-c'
     - |
+      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
       grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG} -o json > grype-frontend-report.json
 
 - name: 'gcr.io/cloud-builders/docker'
