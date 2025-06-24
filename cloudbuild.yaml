@@ -1,4 +1,4 @@
-# ✅ Full cloudbuild.yaml: Secure Build → Scan → Push → Deploy with Fixed Grype Execution
+# ✅ Full cloudbuild.yaml: Secure Build → Scan → Push → Deploy with Grype Fix (using ubuntu)
 
 options:
   defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
@@ -20,13 +20,15 @@ steps:
     - |
       trivy image --exit-code 0 --format json -o trivy-backend-report.json us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG}
 
-- name: 'gcr.io/cloud-builders/bash'
+- name: 'ubuntu'
   id: 'Grype Scan Backend'
+  entrypoint: 'bash'
   args:
     - '-c'
     - |
-      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-      grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG} -o json > grype-backend-report.json
+      apt-get update && apt-get install -y curl
+      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | bash -s -- -b /usr/local/bin
+      /usr/local/bin/grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-backend:${_TAG} -o json > grype-backend-report.json
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Push Backend Image'
@@ -45,13 +47,15 @@ steps:
     - |
       trivy image --exit-code 0 --format json -o trivy-frontend-report.json us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG}
 
-- name: 'gcr.io/cloud-builders/bash'
+- name: 'ubuntu'
   id: 'Grype Scan Frontend'
+  entrypoint: 'bash'
   args:
     - '-c'
     - |
-      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-      grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG} -o json > grype-frontend-report.json
+      apt-get update && apt-get install -y curl
+      curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | bash -s -- -b /usr/local/bin
+      /usr/local/bin/grype us-central1-docker.pkg.dev/zinc-hour-459818-m2/secure-app-repo/secure-frontend:${_TAG} -o json > grype-frontend-report.json
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Push Frontend Image'
